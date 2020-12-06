@@ -1,0 +1,4 @@
+errorhandler.c:16:6:ErrorHandler_Init	16	static
+errorhandler.c:28:6:ErrorHandler_Update	24	static
+errorhandler.c:42:6:ErrorHandler_Increase	16	static
+errorhandler.c:45:6:ErrorHandler_Decrease	16	static

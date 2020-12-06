@@ -1,0 +1,3 @@
+camshaft.c:16:6:Cam_Init	16	static
+camshaft.c:24:6:Cam_CrankPositionSync	4	static
+camshaft.c:28:6:Cam_HalGeberDriver	4	static
