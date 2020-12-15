@@ -2,4 +2,5 @@ injection.c:28:6:Injection_Init_InjectorTIM	16	static
 injection.c:36:6:Injection_Init_IOConfig	24	static
 injection.c:47:6:Injection_Init_InjectionCyl	4	static
 injection.c:84:6:Injection_CalcFuelQty	24	static
-injection.c:91:6:Injection_StartTimerInjectCylinder	24	static
+injection.c:93:6:Injection_DriverLoop	16	static
+injection.c:106:6:Injection_StartTimerInjectCylinder	24	static

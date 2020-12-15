@@ -58,6 +58,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TLE8888_CS_Pin GPIO_PIN_4
+#define TLE8888_CS_GPIO_Port GPIOC
+#define ECU_Term15_Pin GPIO_PIN_10
+#define ECU_Term15_GPIO_Port GPIOE
+#define ECU_Ignition_Pin GPIO_PIN_12
+#define ECU_Ignition_GPIO_Port GPIOE
 #define Led_Green_Pin GPIO_PIN_12
 #define Led_Green_GPIO_Port GPIOD
 #define Led_Orange_Pin GPIO_PIN_13

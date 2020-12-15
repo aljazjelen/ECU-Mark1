@@ -70,11 +70,14 @@ extern void Ignition_MainLoop();
 // Dwell Functions
 extern void Ignition_SetDwellTiming(Ignition_CoilCyl *Cylinder);					// Function used to set the Timing parameters for Dwell functionality for specific cylinder
 extern void Ignition_GetDwellTime(float AppliedTorque);								// Function used to get&set the required Dwell Time based on Applied Torque (TODO more inputs?
-extern void Ignition_StartTimerDwellCylinder(Ignition_CoilCyl *Cylinder);			// API called by driver to start the timer and start to Dwell upon finished period
-extern void Ignition_DwellStarted(Ignition_CoilCyl *Cylinder);						// API called by driver to set the state to Dwelling
 // Fire Functions
 extern void Ignition_SetIgnitionTiming(Ignition_CoilCyl *Cylinder);					// Function used to set the Timing parameters for Fire functionality for specific cylinder
 extern void Ignition_CorrectIgnitionAngle(Ignition_CoilCyl *Cylinder,int AngleOffs);// Function used to set the offset of angle (early/late ignition) for specific cylinder
+
+// DRIVER
+extern void Ignition_DriverLoop(int Cam_HalfCycle,uint8_t Crank_TeethCount);					// Ignition Driver Main Loop
+extern void Ignition_StartTimerDwellCylinder(Ignition_CoilCyl *Cylinder);			// API called by driver to start the timer and start to Dwell upon finished period
+extern void Ignition_DwellStarted(Ignition_CoilCyl *Cylinder);						// API called by driver to set the state to Dwelling
 extern void Ignition_StartTimerFireCylinder(Ignition_CoilCyl *Cylinder);			// API called by driver to start the timer and Fire upon finished period
 extern void Ignition_FireStarted(Ignition_CoilCyl *Cylinder);						// API called by driver to set the state to Fired
 

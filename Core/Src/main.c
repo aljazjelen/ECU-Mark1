@@ -22,11 +22,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "systemconfig.h"
+#include "adc.h"
 #include "crankshaft.h"
 #include "ignition.h"
 #include "camshaft.h"
 #include "injection.h"
+#include "ecucentral.h"
+#include "errorhandler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +48,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
+
+SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim10;
 TIM_HandleTypeDef htim11;
@@ -57,11 +66,14 @@ TIM_HandleTypeDef htim14;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM11_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM12_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM14_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_SPI1_Init(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -87,7 +99,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -99,37 +110,41 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM11_Init();
   MX_TIM3_Init();
   MX_TIM12_Init();
   MX_TIM10_Init();
   MX_TIM14_Init();
+  MX_ADC1_Init();
+  MX_SPI1_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
+
   /* Put Custom INIT here, since peripherals need to be initialized first */
   // Scheduler_Init(); here the TIM channel is assigned to scheduler 10ms and initialized to run periodically
+
   ErrorHandler_Init();
 
   Crank_Init(&htim12,TIM_CHANNEL_1,HAL_TIM_ACTIVE_CHANNEL_1);		// Initialize Crankshaft related sensing + (Hall Timer)
   Cam_Init(&htim12,TIM_CHANNEL_2,HAL_TIM_ACTIVE_CHANNEL_2);			// Initialize Camshaft related sensing + (Hall Timer)
+
 
   Ignition_Init_FireTIM(&htim10,TIM_CHANNEL_1,HAL_TIM_ACTIVE_CHANNEL_1);
   Ignition_Init_DwellTIM(&htim11,TIM_CHANNEL_1,HAL_TIM_ACTIVE_CHANNEL_1);
   Ignition_Init_IOConfig(GPIOD,Ignition_Cyl1_Pin,GPIOD,Ignition_Cyl2_Pin,GPIOD,Ignition_Cyl3_Pin,GPIOD,Ignition_Cyl4_Pin);
   Ignition_Init_IgnitionCyl();
 
-
+  // Injection Init Functions
   Injection_Init_InjectorTIM(&htim14,TIM_CHANNEL_1,HAL_TIM_ACTIVE_CHANNEL_1);
   Injection_Init_IOConfig(GPIOD,Injection_Cyl1_Pin,GPIOD,Injection_Cyl2_Pin,GPIOD,Injection_Cyl3_Pin,GPIOD,Injection_Cyl4_Pin);
   Injection_Init_InjectionCyl();
 
-
-  HAL_TIM_Base_Start_IT(&htim3); // TODO move to Scheduler Init
-  HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1); // TODO move to Scheduler Init
-
+  ADC_Init_TriggerTIM(&htim3,TIM_CHANNEL_1,HAL_TIM_ACTIVE_CHANNEL_1);
+  ADC_Init_ADC1(&hadc1);
 
 
 
@@ -142,7 +157,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  char message[] = "Hello, World";
+	  HAL_GPIO_WritePin(TLE8888_CS_GPIO_Port, TLE8888_CS_Pin, GPIO_PIN_RESET);
+	  HAL_SPI_Transmit(&hspi1, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(TLE8888_CS_GPIO_Port, TLE8888_CS_Pin, GPIO_PIN_SET);
+	  HAL_Delay(10);
 	  HAL_Delay(100);
+
 	  //HAL_GPIO_TogglePin(GPIOD,Led_Red_Pin);
   }
   /* USER CODE END 3 */
@@ -213,6 +235,111 @@ static void MX_NVIC_Init(void)
   /* TIM8_TRG_COM_TIM14_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn);
+  /* ADC_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(ADC_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(ADC_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* SPI1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SPI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(SPI1_IRQn);
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISINGFALLING;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 2;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Rank = 2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_LSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
 }
 
 /**
@@ -237,7 +364,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 84;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 60000;
+  htim3.Init.Period = 50000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -480,6 +607,17 @@ static void MX_TIM14_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -489,13 +627,32 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(TLE8888_CS_GPIO_Port, TLE8888_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, Led_Green_Pin|Led_Orange_Pin|Led_Red_Pin|Led_Blue_Pin
                           |Injection_Cyl1_Pin|Injection_Cyl2_Pin|Injection_Cyl3_Pin|Injection_Cyl4_Pin
                           |Ignition_Cyl4_Pin|Ignition_Cyl2_Pin|Ignition_Cyl3_Pin|Ignition_Cyl1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : TLE8888_CS_Pin */
+  GPIO_InitStruct.Pin = TLE8888_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TLE8888_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ECU_Term15_Pin ECU_Ignition_Pin */
+  GPIO_InitStruct.Pin = ECU_Term15_Pin|ECU_Ignition_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Led_Green_Pin Led_Orange_Pin Led_Red_Pin Led_Blue_Pin
                            Injection_Cyl1_Pin Injection_Cyl2_Pin Injection_Cyl3_Pin Injection_Cyl4_Pin
@@ -504,29 +661,27 @@ static void MX_GPIO_Init(void)
                           |Injection_Cyl1_Pin|Injection_Cyl2_Pin|Injection_Cyl3_Pin|Injection_Cyl4_Pin
                           |Ignition_Cyl4_Pin|Ignition_Cyl2_Pin|Ignition_Cyl3_Pin|Ignition_Cyl1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
-
-void Scheduler_10ms(){
-	// Call all 10ms related functions
-	Ignition_MainLoop();
-	Injection_CalcFuelQty();
+	ECU_MainLoop(); // Call ECU Main Loop after conversion finished
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim == &htim3){
 
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2){
-			HAL_GPIO_TogglePin(GPIOD,Led_Blue_Pin);
+			//HAL_GPIO_TogglePin(GPIOD,Led_Blue_Pin);
 		}else{
-			HAL_GPIO_TogglePin(GPIOD,Led_Green_Pin);
-			Scheduler_10ms(); // Call 10ms Scheduler
+			//HAL_GPIO_TogglePin(GPIOD,Led_Green_Pin);
+			//ECU_MainLoop(); // Call ECU Main Loop (10ms at the moment)
+			// TODO add some diagnostic loop if necessary (100ms for example)
 		}
 	}else{
 		__NOP();
@@ -552,8 +707,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
 		if(htim->Channel == Ignition_FireTIM.ActiveChannel){
 			// Cylinder 1
 			if (Ignition_Cyl1.firestate == TRIG_FIRE){
-				HAL_GPIO_WritePin(GPIOD,Led_Blue_Pin,GPIO_PIN_SET);
-				HAL_GPIO_WritePin(GPIOD,Led_Orange_Pin,GPIO_PIN_RESET);
 				HAL_GPIO_WritePin(GPIOD,Ignition_Cyl1_Pin,GPIO_PIN_RESET);
 				Ignition_FireStarted(&Ignition_Cyl1);
 			}
@@ -563,8 +716,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
 				Ignition_FireStarted(&Ignition_Cyl2);}
 			// Cylinder 3
 			if (Ignition_Cyl3.firestate == TRIG_FIRE){
-				HAL_GPIO_WritePin(GPIOD,Led_Blue_Pin,GPIO_PIN_SET);
-				HAL_GPIO_WritePin(GPIOD,Led_Orange_Pin,GPIO_PIN_RESET);
 				HAL_GPIO_WritePin(GPIOD,Ignition_Cyl3_Pin,GPIO_PIN_RESET);
 				Ignition_FireStarted(&Ignition_Cyl3);
 			}
@@ -580,8 +731,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
 		if(htim->Channel == Ignition_DwellTIM.ActiveChannel){
 			// Cylinder 1
 			if (Ignition_Cyl1.dwellstate == TRIG_DWELL){
-				HAL_GPIO_WritePin(GPIOD,Led_Blue_Pin,GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(GPIOD,Led_Orange_Pin,GPIO_PIN_SET);
 				HAL_GPIO_WritePin(GPIOD,Ignition_Cyl1_Pin,GPIO_PIN_SET);
 				Ignition_DwellStarted(&Ignition_Cyl1);
 			}
@@ -591,8 +740,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
 				Ignition_DwellStarted(&Ignition_Cyl2);}
 			// Cylinder 3
 			if (Ignition_Cyl3.dwellstate == TRIG_DWELL){
-				HAL_GPIO_WritePin(GPIOD,Led_Blue_Pin,GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(GPIOD,Led_Orange_Pin,GPIO_PIN_SET);
 				HAL_GPIO_WritePin(GPIOD,Ignition_Cyl3_Pin,GPIO_PIN_SET);
 				Ignition_DwellStarted(&Ignition_Cyl3);
 			}
@@ -619,45 +766,9 @@ void HAL_TIM_IC_CaptureCallback( TIM_HandleTypeDef *htim ){
 			if (Crank_TeethCount == 1)
 				Cam_CrankPositionSync();
 
+			Injection_DriverLoop(Cam_HalfCycle,Crank_TeethCount);
 
-			// INJECTOR PART
-			if ((Cam_HalfCycle == Injection_Cyl1.injectCamCycle) && (Crank_TeethCount == Injection_Cyl1.injectiontooth))
-				Injection_StartTimerInjectCylinder(&Injection_Cyl1);
-			if ((Cam_HalfCycle == Injection_Cyl2.injectCamCycle) && (Crank_TeethCount == Injection_Cyl2.injectiontooth))
-				Injection_StartTimerInjectCylinder(&Injection_Cyl2);
-			if ((Cam_HalfCycle == Injection_Cyl3.injectCamCycle) && (Crank_TeethCount == Injection_Cyl3.injectiontooth))
-				Injection_StartTimerInjectCylinder(&Injection_Cyl3);
-			if ((Cam_HalfCycle == Injection_Cyl4.injectCamCycle) && (Crank_TeethCount == Injection_Cyl4.injectiontooth))
-				Injection_StartTimerInjectCylinder(&Injection_Cyl4);
-
-			// IGNITION PART
-			// Cylinder 1
-			if ((Cam_HalfCycle == Ignition_Cyl1.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl1.dwelltooth))
-				Ignition_StartTimerDwellCylinder(&Ignition_Cyl1);
-
-			if ((Cam_HalfCycle == Ignition_Cyl1.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl1.firetooth))
-				Ignition_StartTimerFireCylinder(&Ignition_Cyl1);
-
-			// Cylinder 2
-			if ((Cam_HalfCycle == Ignition_Cyl2.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl2.dwelltooth))
-				Ignition_StartTimerDwellCylinder(&Ignition_Cyl2);
-
-			if ((Cam_HalfCycle == Ignition_Cyl2.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl2.firetooth))
-				Ignition_StartTimerFireCylinder(&Ignition_Cyl2);
-
-			// Cylinder 3
-			if ((Cam_HalfCycle == Ignition_Cyl3.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl3.dwelltooth))
-				Ignition_StartTimerDwellCylinder(&Ignition_Cyl3);
-
-			if ((Cam_HalfCycle == Ignition_Cyl3.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl3.firetooth))
-				Ignition_StartTimerFireCylinder(&Ignition_Cyl3);
-
-			// Cylinder 4
-			if ((Cam_HalfCycle == Ignition_Cyl4.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl4.dwelltooth))
-				Ignition_StartTimerDwellCylinder(&Ignition_Cyl4);
-
-			if ((Cam_HalfCycle == Ignition_Cyl4.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl4.firetooth))
-				Ignition_StartTimerFireCylinder(&Ignition_Cyl4);
+			Ignition_DriverLoop(Cam_HalfCycle,Crank_TeethCount);
 
 			// Call the Hall driver at the end. Since it takes most time and it can be called at the end, since the tooth counter is implemented at the beginning,
 			// therefore it is not critical for performance.

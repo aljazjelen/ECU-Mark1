@@ -5,6 +5,7 @@
  *      Author: aljaz
  */
 #include "stm32f4xx_hal.h"
+#include "adc.h"
 
 #ifndef INC_INJECTION_H_
 #define INC_INJECTION_H_
@@ -53,7 +54,8 @@ extern void Injection_Init_IOConfig(GPIO_TypeDef *port1,__IO uint16_t pin1,GPIO_
 extern void Injection_Init_InjectionCyl();
 
 // INJECTOR DRIVER FUNCTIONS
-extern void Injection_StartTimerInjectCylinder(Injection_InjectorCyl *Cylinder);
+extern void Injection_DriverLoop(int Cam_HalfCycle,uint8_t Crank_TeethCount);									// Injection Driver Main Loop
+extern void Injection_StartTimerInjectCylinder(Injection_InjectorCyl *Cylinder);								// API to start injector timer for injection
 
 
 #endif /* INC_INJECTION_H_ */

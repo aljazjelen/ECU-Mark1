@@ -9,11 +9,12 @@
 #define INC_ECUCENTRAL_H_
 
 typedef enum{
-	off = 0,
-	initializing = 1,
-	cranking = 2,
-	running = 3,
-	postdrive = 4
+	sleep = 0,
+	initialize = 1,
+	idle = 2,
+	cranking = 3,
+	running = 4,
+	postdrive = 5
 }ECU_Modes;
 
 typedef struct{
@@ -25,6 +26,8 @@ extern ECU_Info ECU;
 
 extern void ECU_MainLoop();
 extern void ECU_InitLoop();
+
+extern void ECU_CommonFunctions();
 extern void ECU_CrankingLoop();
 extern void ECU_RunLoop();
 extern void ECU_PostDriveLoop();

@@ -83,11 +83,26 @@ void Injection_Init_InjectionCyl(){
 // METHODS
 void Injection_CalcFuelQty(){
 	float fuel = 0;
+	uint16_t temp = ADC1_getVal(ADC1_Temp1);
+
 	fuel = Common_GetFrom2Dmap(6,700,xx,yy,ax,ay,map);
 
 }
 
 // INECTOR DRIVER FUNCTIONS ========================================
+void Injection_DriverLoop(int Cam_HalfCycle,uint8_t Crank_TeethCount){
+	// Start Injecting based on camshaft and crankshaft. At the moment, injection starts at specific tooth.
+
+	if ((Cam_HalfCycle == Injection_Cyl1.injectCamCycle) && (Crank_TeethCount == Injection_Cyl1.injectiontooth))
+		Injection_StartTimerInjectCylinder(&Injection_Cyl1);
+	if ((Cam_HalfCycle == Injection_Cyl2.injectCamCycle) && (Crank_TeethCount == Injection_Cyl2.injectiontooth))
+		Injection_StartTimerInjectCylinder(&Injection_Cyl2);
+	if ((Cam_HalfCycle == Injection_Cyl3.injectCamCycle) && (Crank_TeethCount == Injection_Cyl3.injectiontooth))
+		Injection_StartTimerInjectCylinder(&Injection_Cyl3);
+	if ((Cam_HalfCycle == Injection_Cyl4.injectCamCycle) && (Crank_TeethCount == Injection_Cyl4.injectiontooth))
+		Injection_StartTimerInjectCylinder(&Injection_Cyl4);
+}
+
 void Injection_StartTimerInjectCylinder(Injection_InjectorCyl *Cylinder){
 	Cylinder->injectorstate = TRIG_INJECT;
 	//uint32_t injectionStartInUs = Cylinder->time2injection;

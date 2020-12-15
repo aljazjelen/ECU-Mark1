@@ -1,0 +1,5 @@
+adc.c:23:6:ADC_Init_TriggerTIM	16	static
+adc.c:28:6:ADC_Init_ADC1	16	static
+adc.c:36:17:ADC1_getVal	16	static
+adc.c:37:17:ADC2_getVal	16	static
+adc.c:38:17:ADC3_getVal	16	static

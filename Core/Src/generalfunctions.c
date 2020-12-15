@@ -80,3 +80,44 @@ float Common_GetFrom2Dmap(float x, float y, int sizex, int sizey, float *arrayX,
 
 	return val;
 }
+
+
+float Common_GetFrom1Dmap(float x, int sizex, float *arrayX){
+	float val = 0;
+
+	int xLowInd = 0;
+	int xHighInd = 0;
+
+	float xFractMin;
+	float xFractMax;
+
+	float xLimited;
+
+	if (x < arrayX[0]){
+		xLowInd = 0;
+		xHighInd = 1;
+		xLimited = arrayX[0];
+	}else if (x >= arrayX[sizex-1]){
+		xLowInd = sizex-2;
+		xHighInd = sizex-1;
+		xLimited = arrayX[sizex-1];
+	}
+	else{
+		xLimited = x;
+		for (int i = 0; i < sizex; i++){
+			if (x > arrayX[i])
+				xLowInd = i;
+		}
+		xHighInd = xLowInd+1;
+	}
+	xFractMin = arrayX[xLowInd];
+	xFractMax = arrayX[xHighInd];
+
+	float xFract = (xLimited-xFractMin)/(xFractMax-xFractMin);
+
+	float a = arrayX[xLowInd];
+	float b = arrayX[xHighInd];
+
+	val = a*(1-xFract) + b*(xFract);
+	return val;
+}

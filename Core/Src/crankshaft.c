@@ -86,7 +86,7 @@ void Crank_HalGeberDriver(){
 	}
 }
 
-/* Helper funcion for Teeth Counter reset */
+/* Helper function for Teeth Counter reset */
 void Crank_TeethCounterReset(){
 	Crank_TeethCount = 1;
 }
@@ -105,8 +105,8 @@ void Crank_AngleCalc(){
 	Crank_Angle = 360*(Crank_TeethCount-1)/(CrankCfg.Crank_TeethNmbr_P+CrankCfg.Crank_MissingTeethNmbr_P);
 }
 
-/*
-/* Used to synchronise angle calculation considering twice slower rotation of camshaft //
+
+/* Used to synchronise angle calculation considering twice slower rotation of camshaft
 void Crank_CamPositionSync(){
 	Engine_Angle = Crank_Angle + Cam_CycleStart*360;
 }*/

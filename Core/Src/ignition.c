@@ -241,6 +241,38 @@ uint32_t Ignition_AngleToUs(int CrankShaftHz, float AngleDegree){
 }
 
 // FIRE DRIVER FUNCTIONS ===========================================
+void Ignition_DriverLoop(int Cam_HalfCycle, uint8_t Crank_TeethCount){
+	// Start ignition timers (either Fire or Dwell) based on Camshaft and Cranshaft position.
+
+	// Cylinder 1
+	if ((Cam_HalfCycle == Ignition_Cyl1.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl1.dwelltooth))
+		Ignition_StartTimerDwellCylinder(&Ignition_Cyl1);
+
+	if ((Cam_HalfCycle == Ignition_Cyl1.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl1.firetooth))
+		Ignition_StartTimerFireCylinder(&Ignition_Cyl1);
+
+	// Cylinder 2
+	if ((Cam_HalfCycle == Ignition_Cyl2.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl2.dwelltooth))
+		Ignition_StartTimerDwellCylinder(&Ignition_Cyl2);
+
+	if ((Cam_HalfCycle == Ignition_Cyl2.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl2.firetooth))
+		Ignition_StartTimerFireCylinder(&Ignition_Cyl2);
+
+	// Cylinder 3
+	if ((Cam_HalfCycle == Ignition_Cyl3.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl3.dwelltooth))
+		Ignition_StartTimerDwellCylinder(&Ignition_Cyl3);
+
+	if ((Cam_HalfCycle == Ignition_Cyl3.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl3.firetooth))
+		Ignition_StartTimerFireCylinder(&Ignition_Cyl3);
+
+	// Cylinder 4
+	if ((Cam_HalfCycle == Ignition_Cyl4.dwellCamCycle) && (Crank_TeethCount == Ignition_Cyl4.dwelltooth))
+		Ignition_StartTimerDwellCylinder(&Ignition_Cyl4);
+
+	if ((Cam_HalfCycle == Ignition_Cyl4.fireCamCycle) && (Crank_TeethCount == Ignition_Cyl4.firetooth))
+		Ignition_StartTimerFireCylinder(&Ignition_Cyl4);
+}
+
 void Ignition_StartTimerFireCylinder(Ignition_CoilCyl *Cylinder){
 	Cylinder->firestate = TRIG_FIRE;
 	uint32_t fireStartInUs = Cylinder->time2fire;

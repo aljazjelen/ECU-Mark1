@@ -10,7 +10,8 @@ ignition.c:178:6:Ignition_GetDwellTime	16	static
 ignition.c:182:6:Ignition_DefineDwellTeeth	40	static
 ignition.c:211:6:Ignition_SetDwellTiming	40	static
 ignition.c:239:10:Ignition_AngleToUs	16	static
-ignition.c:244:6:Ignition_StartTimerFireCylinder	24	static
-ignition.c:255:6:Ignition_FireStarted	16	static
-ignition.c:260:6:Ignition_StartTimerDwellCylinder	24	static
-ignition.c:271:6:Ignition_DwellStarted	16	static
+ignition.c:244:6:Ignition_DriverLoop	16	static
+ignition.c:276:6:Ignition_StartTimerFireCylinder	24	static
+ignition.c:287:6:Ignition_FireStarted	16	static
+ignition.c:292:6:Ignition_StartTimerDwellCylinder	24	static
+ignition.c:303:6:Ignition_DwellStarted	16	static

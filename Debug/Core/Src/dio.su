@@ -1,0 +1,2 @@
+dio.c:16:6:DIO_getAllPorts	16	static
+dio.c:23:9:PORTE_getVal	16	static

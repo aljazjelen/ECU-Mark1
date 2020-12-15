@@ -1,6 +1,8 @@
-ecucentral.c:16:6:ECU_MainLoop	8	static
-ecucentral.c:54:6:ECU_CheckTransitConditions	4	static
-ecucentral.c:58:6:ECU_InitLoop	4	static
-ecucentral.c:61:6:ECU_CrankingLoop	4	static
-ecucentral.c:64:6:ECU_RunLoop	4	static
-ecucentral.c:67:6:ECU_PostDriveLoop	4	static
+ecucentral.c:23:6:ECU_MainLoop	8	static
+ecucentral.c:85:6:ECU_CommonFunctions	8	static
+ecucentral.c:91:6:ECU_CheckTransitConditions	4	static
+ecucentral.c:94:6:ECU_InitLoop	4	static
+ecucentral.c:117:6:ECU_IdleLoop	4	static
+ecucentral.c:120:6:ECU_CrankingLoop	8	static
+ecucentral.c:125:6:ECU_RunLoop	8	static
+ecucentral.c:130:6:ECU_PostDriveLoop	8	static

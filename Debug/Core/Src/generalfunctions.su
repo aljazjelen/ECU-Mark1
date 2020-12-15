@@ -1,1 +1,2 @@
 generalfunctions.c:12:7:Common_GetFrom2Dmap	112	static
+generalfunctions.c:85:7:Common_GetFrom1Dmap	64	static
